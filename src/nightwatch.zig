@@ -167,19 +167,20 @@ pub fn Create(comptime variant: Variant) type {
             // Make the path absolute without resolving symlinks so that callers who
             // pass "/tmp/foo" (where /tmp is a symlink) receive events with the same
             // "/tmp/foo" prefix rather than the resolved "/private/tmp/foo" prefix.
-            var buf: [std.fs.max_path_bytes]u8 = undefined;
-            const abs_path: []const u8 = if (std.fs.path.isAbsolute(path))
-                path
-            else blk: {
-                var cwd_buf: [std.fs.max_path_bytes]u8 = undefined;
-                const cwd_len = std.Io.Dir.cwd().realPath(self.io, &cwd_buf) catch return error.WatchFailed;
-                const cwd = cwd_buf[0..cwd_len];
-                break :blk std.fmt.bufPrint(&buf, "{s}{c}{s}", .{ cwd, std.fs.path.sep, path }) catch return error.WatchFailed;
-            };
+            // var buf: [std.fs.max_path_bytes]u8 = undefined;
+            // const abs_path: []const u8 = if (std.fs.path.isAbsolute(path))
+            //     path
+            // else blk: {
+            //     var cwd_buf: [std.fs.max_path_bytes]u8 = undefined;
+            //     const cwd_len = std.Io.Dir.cwd().realPath(self.io, &cwd_buf) catch return error.WatchFailed;
+            //     const cwd = cwd_buf[0..cwd_len];
+            //     break :blk std.fmt.bufPrint(&buf, "{s}{c}{s}", .{ cwd, std.fs.path.sep, path }) catch return error.WatchFailed;
+            // };
+            
             // Collapse any . and .. segments without touching the filesystem so that
             // relative inputs like "../sibling" or "./sub" produce the same watch key
             // and event-path prefix as an equivalent absolute path would.
-            const norm = try std.fs.path.resolve(self.allocator, &.{abs_path});
+            const norm = try std.fs.path.resolve(self.allocator, &.{path});
             defer self.allocator.free(norm);
             try self.interceptor.backend.add_watch(self.allocator, norm);
             if (!Backend.watches_recursively) {
